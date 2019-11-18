@@ -32,7 +32,7 @@ package cse360teamproject;
  * Ruijun Yang<br>
  *  
  * @since 1.0.0
- * @version 1.1.0
+ * @version 1.1.1
  *  
  * @param inputFile
  * @param programFrame
@@ -178,7 +178,7 @@ public class Formatter {
 	 * Ruijun Yang<br>
 	 * 
 	 * @since 1.1.0
-	 * @version 1.0.0
+	 * @version 1.0.1
 	 */
 	
 	private class ActionController implements ActionListener {
@@ -193,7 +193,7 @@ public class Formatter {
 	            
 	         } else if(command.contentEquals("preview")) {
 	        	
-	        	previewTextArea.setText("     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod" + "\n" + 
+	        	previewTextArea.setText("     Lorem  ipsum  dolor  sit  amet, consectetur adipiscing elit, sed do eiusmod" + "\n" + 
 	        							"\n" +
 	        							"tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," + "\n" + 
 	        							"\n" +
