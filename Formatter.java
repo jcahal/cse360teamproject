@@ -26,114 +26,189 @@ package cse360teamproject;
  *  
  *  -e Blank line
  *  
- *  @author Jonathan Cahal <br>
- *  Tingyu Luo<br>
- *  Anna McDonald<br>
- *  Ruijun Yang<br>
+ * @author Jonathan Cahal <br>
+ * Tingyu Luo<br>
+ * Anna McDonald<br>
+ * Ruijun Yang<br>
  *  
- *  @since 1.0.0
- *  @version 1.0.0
+ * @since 1.0.0
+ * @version 1.1.0
  *  
- *	@param inputFile
- *	@param gui
+ * @param inputFile
+ * @param programFrame
+ * @param sidePanel
+ * @param actionPanel
+ * @param errorPanel
+ * @param previewPanel
+ * @param errorLogTextArea
+ * @param previewTextArea
+ * @param fileChooser
  */
 
 import java.io.*;
 import java.awt.*;
+import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.BorderFactory;
 
 public class Formatter {
 	
-	private FileInputStream inputFile = null;
-	private GUI gui = null;
+	private JFrame programFrame;
+	private JPanel sidePanel;
+	private JPanel actionPanel;
+	private JPanel errorPanel;
+	private JPanel previewPanel;
+	private JTextArea errorLogTextArea;
+	private JTextArea previewTextArea;
+	private File inputFile = null;
+	final JFileChooser fileChooser = new JFileChooser("~/");
 	
 	
 	public static void main(String[] args) {
-		Formatter program = new Formatter();
-	}
-	
-	/**
-	 * Default constructor, prepares GUI
-	 * 
-	 * @since 1.0.0
-	 * @version 1.0.0
-	 */
-	public Formatter() {
-		gui = new GUI();
+		Formatter formatter = new Formatter();
 		
 	}
 	
 	/**
-	 * GUI class for the Formatter
+	 * Default constructor, creates GUI and runs
+	 * 
+	 * @since 1.0.0
+	 * @version 1.1.0
+	 */
+	public Formatter() {
+		createGUI();
+		run();
+		
+	}
+	
+	/**
+	 * createGUI() - Creates GUI for the Formatter class
+	 * 
+	 * @return void
 	 * 
 	 * @author Jonathan Cahal <br>
 	 * Tingyu Luo<br>
 	 * Anna McDonald<br>
 	 * Ruijun Yang<br>
 	 * 
-	 * @since 1.0.0
-	 * @version 1.0.0
-	 * 
-	 * @param sidePanel
-	 * @param actionPanel
-	 * @param errorPanel
-	 * @param previewPanel
-	 * @param chooseFileButton
-	 * @param previewButton
-	 * @param saveAsButton
-	 * @param errorLogTextArea
-	 * @param previewTextArea
-	 *
+	 * @since 1.1.0
+	 * @version 1.0.0 
 	 */
-	private class GUI extends JFrame {
+	private void createGUI() {
 		
-		private JPanel sidePanel;
-		private JPanel actionPanel;
-		private JPanel errorPanel;
-		private JPanel previewPanel;
-		private JButton chooseFileButton;
-		private JButton previewButton;
-		private JButton saveAsButton;
-		private JTextArea errorLogTextArea;
-		private JTextArea previewTextArea;
+		programFrame = new JFrame("Formatter");
 		
-		public GUI() {
+		programFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // End program on frame close
+		programFrame.setBounds(100, 100, 650, 400);
+		
 			
-			sidePanel = new JPanel(new GridLayout(2,1));
-			actionPanel = new JPanel(new GridLayout(3,1));
-			errorPanel = new JPanel(new GridLayout(1,1));
-			previewPanel = new JPanel(new GridLayout(1,1));
-			chooseFileButton = new JButton("Choose File");
-			previewButton = new JButton("Preview");
-			saveAsButton = new JButton("Save As");
-			errorLogTextArea = new JTextArea();
-			errorLogTextArea.setEditable(false);
-			errorLogTextArea.setText("No Errors");
-			previewTextArea = new JTextArea(); 
-			previewTextArea.setEditable(false);
-			previewTextArea.setText("No preview available, choose a file to continue.");
-			
-			actionPanel.add(chooseFileButton);
-			actionPanel.add(previewButton);
-			actionPanel.add(saveAsButton);
-			actionPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
-			errorPanel.add(errorLogTextArea);
-			errorPanel.setBorder(BorderFactory.createTitledBorder("Error Log"));
-			previewPanel.add(previewTextArea);
-			previewPanel.setBorder(BorderFactory.createTitledBorder("File Preview"));
-			sidePanel.add(actionPanel);
-			sidePanel.add(errorPanel);
-			
-			setTitle("Formatter");
-			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			setBounds(100, 100, 600, 400);
-			setLayout(new BorderLayout());
-			add(sidePanel, BorderLayout.WEST);
-			add(previewPanel, BorderLayout.CENTER);
-			
-			setVisible(true);
-		}
+		sidePanel = new JPanel(new GridLayout(2,1));
+		actionPanel = new JPanel(new GridLayout(3,1));
+		errorPanel = new JPanel(new GridLayout(1,1));
+		previewPanel = new JPanel(new GridLayout(1,1));
+		errorLogTextArea = new JTextArea();
+		previewTextArea = new JTextArea(); 
+		
+		errorLogTextArea.setEditable(false);
+		errorLogTextArea.setText("No Errors");
+		
+		previewTextArea.setEditable(false);
+		previewTextArea.setText("No preview available, choose a file to continue.");
+		
+		
+		actionPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
+		errorPanel.setBorder(BorderFactory.createTitledBorder("Error Log"));
+		previewPanel.setBorder(BorderFactory.createTitledBorder("File Preview"));
+		
+		errorPanel.add(errorLogTextArea);
+		
+		previewPanel.add(previewTextArea);
+		
+		sidePanel.add(actionPanel);
+		sidePanel.add(errorPanel);
+		
+		programFrame.setLayout(new BorderLayout());
+		programFrame.add(sidePanel, BorderLayout.WEST);
+		programFrame.add(previewPanel, BorderLayout.CENTER);
+		
+		programFrame.setVisible(true);
+		
+	}
+	
+	/**
+	 * run() - Creates buttons on GUI and links events to ActionController
+	 * 
+	 * @return void
+	 * 
+	 * @author Jonathan Cahal <br>
+	 * Tingyu Luo<br>
+	 * Anna McDonald<br>
+	 * Ruijun Yang<br>
+	 * 
+	 * @since 1.1.0
+	 * @version 1.0.0
+	 */
+	
+	private void run() {
+		JButton chooseFileButton = new JButton("Choose File");
+		JButton previewButton = new JButton("Preview");
+		JButton saveAsButton = new JButton("Save As");
+		
+		chooseFileButton.setActionCommand("chooseFile");
+		previewButton.setActionCommand("preview");
+		saveAsButton.setActionCommand("saveAs");
+		
+		chooseFileButton.addActionListener(new ActionController());
+		previewButton.addActionListener(new ActionController());
+		saveAsButton.addActionListener(new ActionController());
+		
+		actionPanel.add(chooseFileButton);
+		actionPanel.add(previewButton);
+		actionPanel.add(saveAsButton);
+		
+		programFrame.setVisible(true);
+	}
+	
+	/**
+	 * ActionController decides what to do for each specific action.
+	 * 
+	 * @author Jonathan Cahal <br>
+	 * Tingyu Luo<br>
+	 * Anna McDonald<br>
+	 * Ruijun Yang<br>
+	 * 
+	 * @since 1.1.0
+	 * @version 1.0.0
+	 */
+	
+	private class ActionController implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+	         String command = e.getActionCommand();  
+	         
+	         if( command.equals("chooseFile"))  {
+	            
+	        	fileChooser.showOpenDialog(programFrame.getParent());
+	            inputFile = fileChooser.getSelectedFile();
+	            
+	            
+	         } else if(command.contentEquals("preview")) {
+	        	
+	        	previewTextArea.setText("     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod" + "\n" + 
+	        							"\n" +
+	        							"tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," + "\n" + 
+	        							"\n" +
+	        							"quis nostrud exercitation");
+	        	 
+	         } else if(command.contentEquals("saveAs")) {
+	        	 
+	        	 if (inputFile != null) {
+	        		 fileChooser.showSaveDialog(programFrame.getParent());
+	        	 } else {
+	        		 errorLogTextArea.setText("No file choosen");
+	        	 }
+	        	 
+	         }
+	      }		
 		
 	}
 }
