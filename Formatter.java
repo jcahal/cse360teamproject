@@ -33,7 +33,7 @@ package cse360teamproject;
  * Ruijun Yang<br>
  *  
  * @since 1.0.0
- * @version 2.1.0 +Srollability to error log and preview
+ * @version 2.1.2
  *  
  * @param inputFile
  * @param output
@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.BorderFactory;
 
 public class Formatter {
@@ -81,6 +82,7 @@ public class Formatter {
 	 * @version 1.1.0
 	 */
 	public Formatter() {
+		fileChooser.setFileFilter(new FileNameExtensionFilter("TXT files only", "txt"));
 		guiCreateFrame();
 		guiLinkActions();
 	}
@@ -95,6 +97,8 @@ public class Formatter {
 	 * 
 	 */
 	private void preview(FileReader file) {
+		previewTextArea.setText("");
+		
 		ArrayList<Section> sections = parse(file);
 		
 		sections.forEach(section -> format(section));
@@ -153,21 +157,40 @@ public class Formatter {
 						parsedParagraph += (char)currentChar; // put '\n' into paragraph
 						currentChar = file.read();
 						
-					} else if((char)currentChar == '-') {
+						if((char)currentChar == '-') {
+							
+							parsingParagraph = false;
+							Settings settings;
+							
+							if(sections.size() > 1) {
+								settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
+								parsedFlags.forEach(flag -> settings.updateSetting(flag));
+							} else {
+								settings = new Settings(parsedFlags);
+								sections.add(new Section(parsedParagraph, settings)); // create and add section	
+							}
+						}
 						
-						parsingParagraph = false;
-						sections.add(new Section(parsedParagraph, new Settings(parsedFlags))); // create and add section
 					} else if(currentChar == -1) {
 						
 						parsingFlags = false;
 						parsingParagraph = false;
-						sections.add(new Section(parsedParagraph, new Settings(parsedFlags))); // create and add section
+						Settings settings;
+						
+						if(sections.size() > 1) {
+							settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
+							parsedFlags.forEach(flag -> settings.updateSetting(flag));
+						} else {
+							settings = new Settings(parsedFlags);
+							sections.add(new Section(parsedParagraph, settings)); // create and add section	
+						}
 					} else {
 						
 						parsedParagraph += (char)currentChar;
 						currentChar = file.read();
 					}
 				}// end parsing paragraph
+				errorLogTextArea.append("\nsection added");
 			} // end parsing file
 		} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
 		
@@ -186,58 +209,165 @@ public class Formatter {
 	 * Ruijun Yang<br>
 	 * 
 	 * @since 1.2.0
-	 * @version 2.0.0
+	 * @version 2.2.0
 	 * 
 	 * @param section Section
 	 */
 	private void format(Section section) {
 		Settings settings = section.settings;
-		StringBuilder paragraph = new StringBuilder(section.paragraph);
-		StringBuilder line = new StringBuilder();
+		String paragraph = section.paragraph;
+		String newLine = "";
 		ArrayList<String> lines = new ArrayList<String>();
-		Character currentChar;
-		int lineStartIndex = 0;
-		int lastWhitespace = 81;
 		int lineSize = 80;
+		
+		paragraph = paragraph.replace('\n', ' '); // replace all new line chars
 		
 		if(settings.oneColumn) {
 			
 			if(settings.indented) {
-				paragraph.insert(0, "     ");
+				paragraph = padding(5) + paragraph;
 				
 			} else if(settings.blockIndented) {
 				lineSize = 70;
 			}
 			
-			for(int i = 0; i < paragraph.length() - 1; i++) {
+			while(paragraph.length() > lineSize) { // set line breaks
+				int i = lineSize - 1;
 				
-				currentChar = paragraph.charAt(i);
-				if(Character.isWhitespace(currentChar)) {
-					lastWhitespace = i;
-				} else if(currentChar == '\n') {
-					paragraph.setCharAt(i, ' ');
-				} 
-				
-				if(i % lineSize == 0) {
-					if(lastWhitespace < i) {
-						if(settings.rightJustified) {
-							for(int j = 0; j < i - lastWhitespace; j++ ) {
-								line.insert(0, " ");
-							}
-						} 
-						
-						lines.add(paragraph.substring(lineStartIndex, lastWhitespace));
-						lineStartIndex = lastWhitespace + 1;
-					} else {
-						lines.add(paragraph.substring(lineStartIndex, i));
-						lineStartIndex = i + 1;
+				if(!Character.isWhitespace(paragraph.charAt(i))) { // does line end on a space " "? 
+					while(!Character.isWhitespace(paragraph.charAt(i))) { // find the closest space 
+						i--;
 					}
 				}
+				
+				newLine = paragraph.substring(0, i); // make and add a line
+				
+				if(settings.rightJustified) {
+					lines.add(padding(lineSize - newLine.length()) + newLine);
+					
+				} else if(settings.centered) {
+					String padding = padding((lineSize - newLine.length()) / 2);
+					lines.add(String.format("%s%s%s", padding, newLine, padding));
+					
+				} else if(settings.centerJustified) {
+					String padding = padding(lineSize - newLine.length());
+					
+					// find spaces
+					ArrayList<Integer> spaceIndexes = new ArrayList<Integer>();
+					
+					for(int j = 0; j < newLine.length(); j++) {
+						if(!Character.isWhitespace(newLine.charAt(j))) {
+							spaceIndexes.add(j);
+						}
+					}
+					StringBuilder tmpString = new StringBuilder(newLine);
+					
+					for(int j = 0; j <  padding.length(); j++) {
+						tmpString.insert(spaceIndexes.get(j), " ");
+					}
+					
+					newLine = tmpString.toString();
+					
+				} else {
+					lines.add(newLine);
+				}
+				
+				paragraph = paragraph.substring(i + 1);	// trim line off newLine
 			}
+			
+			lines.add(paragraph); // add what's left of the paragraph
+			
 		} else if(settings.twoColumn) {
-
+			lineSize = 35;
+			String leftParagraph;
+			String rightParagraph;
+			
+			
+			if(!Character.isWhitespace(paragraph.charAt(paragraph.length() / 2))) {
+				int i = paragraph.length() / 2;
+				
+				while(!Character.isWhitespace(paragraph.charAt(i))) { // find the closest space 
+					i--;
+				}
+				
+				leftParagraph = paragraph.substring(0, (i));
+				rightParagraph = paragraph.substring(i + 1, paragraph.length());
+			} else {
+				leftParagraph = paragraph.substring(0, (paragraph.length() / 2));
+				rightParagraph = paragraph.substring((paragraph.length() / 2), paragraph.length());
+			}
+			
+			while(leftParagraph.length() > lineSize) { // set line breaks
+				
+				if(!Character.isWhitespace(leftParagraph.charAt(lineSize - 1))) { // does line end on a space " "? 
+					int i = lineSize - 1;
+					while(!Character.isWhitespace(leftParagraph.charAt(i))) { // find the closest space 
+						i--;
+					}
+					
+					newLine = leftParagraph.substring(0, i); // make and add a line
+					
+					lines.add(newLine + padding(45 - newLine.length())); // include column gutters
+					leftParagraph = leftParagraph.substring(i + 1);	// trim line off paragraph
+				} else {
+					newLine = leftParagraph.substring(0, lineSize);
+					lines.add(newLine + padding(9));
+					leftParagraph = leftParagraph.substring(lineSize + 1);
+				}
+			}
+			
+			lines.add(leftParagraph + padding(45 - leftParagraph.trim().length())); // add what's left of the paragraph
+			
+			int j = 0;
+			while(rightParagraph.length() > lineSize) { // set line breaks
+				
+				
+				if(!Character.isWhitespace(rightParagraph.charAt(lineSize - 1))) { // does line end on a space " "? 
+					int i = lineSize - 1;
+					while(!Character.isWhitespace(rightParagraph.charAt(i))) { // find the closest space 
+						i--;
+					}
+					
+					newLine = rightParagraph.substring(0, i); // make a line
+					lines.set(j, lines.get(j) + newLine); // add it to the previous one
+					rightParagraph = rightParagraph.substring(i + 1);	// trim line off paragraph
+				} else {
+					newLine = rightParagraph.substring(0, lineSize);
+					lines.set(j, lines.get(j) + newLine);
+					rightParagraph = rightParagraph.substring(lineSize + 1);
+				}
+				
+				j++;
+			}
+			
+			lines.set(j, lines.get(j) + rightParagraph);
+			
 		}
 		
+		if(settings.blankLine) {
+			previewTextArea.append("\n");
+		}
+		
+		if(settings.blockIndented) {
+			lines.forEach(line -> previewTextArea.append(padding(10) + line + "\n"));
+		} else if(settings.doubleSpaced) {
+			lines.forEach(line -> previewTextArea.append(line + "\n\n"));
+		} else {
+			lines.forEach(line -> previewTextArea.append(line + "\n"));
+		}
+		
+	}
+	
+	/**
+	 * 
+	 */
+	private String padding(int size) {
+		String padding = "";
+		while(padding.length() < size) {
+			padding += " ";
+		}
+		
+		return padding;
 	}
 	
 	/**
@@ -258,7 +388,7 @@ public class Formatter {
 		programFrame = new JFrame("Formatter");
 		
 		programFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // End program on frame close
-		programFrame.setBounds(100, 100, 650, 400);
+		programFrame.setBounds(100, 100, 670, 400);
 		
 			
 		sidePanel = new JPanel(new GridLayout(2,1));
@@ -409,6 +539,7 @@ public class Formatter {
 		private boolean twoColumn = false;
 		private boolean blankLine = false;
 		private int lineSize = 80;
+		private ArrayList<Character> flags = new ArrayList<Character>();
 		
 		
 		/**
@@ -430,7 +561,12 @@ public class Formatter {
 		 * @param
 		 */
 		public Settings(ArrayList<Character> flags) {
+			this.flags = flags;
 			flags.forEach((flag) -> updateSetting(flag));
+		}
+		
+		public ArrayList<Character> getFlags() {
+			return flags;
 		}
 		
 		public void updateSetting(Character flag) {
@@ -448,6 +584,10 @@ public class Formatter {
 					rightJustified = true;
 					centerJustified = false;
 					centered = false;
+					indented = false;
+					blockIndented = false;
+					oneColumn = true;
+					twoColumn = false;
 					
 					break;
 				}
@@ -456,6 +596,10 @@ public class Formatter {
 					rightJustified = false;
 					centerJustified = true;
 					centered = false;
+					indented = false;
+					blockIndented = false;
+					oneColumn = true;
+					twoColumn = false;
 					
 					break;
 				}
@@ -464,6 +608,10 @@ public class Formatter {
 					rightJustified = false;
 					centerJustified = false;
 					centered = true;
+					indented = false;
+					blockIndented = false;
+					oneColumn = true;
+					twoColumn = false;
 					
 					break;
 				}
@@ -482,12 +630,22 @@ public class Formatter {
 				case 'i': {
 					indented = true;
 					blockIndented = false;
+					rightJustified = false;
+					centerJustified = false;
+					centered = false;
+					oneColumn = true;
+					twoColumn = false;
 					
 					break;
 				}
 				case 'b': {
 					blockIndented = true;
 					indented = false;
+					rightJustified = false;
+					centerJustified = false;
+					centered = false;
+					oneColumn = true;
+					twoColumn = false;
 					
 					break;
 				}
@@ -500,6 +658,11 @@ public class Formatter {
 				case '2': {
 					twoColumn = true;
 					oneColumn = false;
+					indented = false;
+					blockIndented = false;
+					rightJustified = false;
+					centerJustified = false;
+					centered = false;
 					
 					break;
 				}
@@ -576,18 +739,6 @@ public class Formatter {
 		
 		public String toString() {
 			return settings.toString() + paragraph;
-		}
-	}
-	
-	private class Word {
-		private int startIndex;
-		private String text;
-		private int length;
-		
-		public word(int startIndex, String text, int length) {
-			this.startIndex = startIndex;
-			this.text = text;
-			this.length = length;
 		}
 	}
 }
