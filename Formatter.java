@@ -33,7 +33,7 @@ package cse360teamproject;
  * Ruijun Yang<br>
  *  
  * @since 1.0.0
- * @version 2.3.0
+ * @version 2.4.0
  *  
  * @param inputFile
  * @param output
@@ -143,8 +143,6 @@ public class Formatter {
 				flags.forEach(flag -> settings.updateSetting(flag));
 				format(paragraph, settings);
 				
-				// print sections to preview, for debug
-				// sections.forEach(section -> previewTextArea.append(section.toString()));
 				reader.close();
 				
 			} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
@@ -193,6 +191,8 @@ public class Formatter {
 		String newLine = "";
 		ArrayList<String> lines = new ArrayList<String>();
 		int lineSize = 80;
+		char[] lineChars;
+		lineChars = new char[lineSize];
 		
 		paragraph = paragraph.replace('\n', ' '); // replace all new line chars
 		
@@ -219,7 +219,7 @@ public class Formatter {
 					}
 				}
 				
-				newLine = paragraph.substring(0, i); // make and add a line
+				newLine = paragraph.substring(0, i).trim(); // make and add a line
 				
 				if(settings.rightJustified) {
 					lines.add(padding(lineSize - newLine.length()) + newLine);
@@ -247,13 +247,40 @@ public class Formatter {
 					
 					newLine = tmpString.toString();
 					
-				}
+				} 
 				else 
 				{	
 					lines.add(newLine);
 				}		
 				
-				paragraph = paragraph.substring(i + 1);	// trim line off newLine
+				paragraph = paragraph.substring(i + 1).trim();	// trim line off newLine
+			}
+			
+			if(settings.rightJustified) {
+				lines.add(padding(lineSize - paragraph.length()) + paragraph);	
+				
+			} else if(settings.centered) {
+				String padding = padding((lineSize - paragraph.length()) / 2);
+				lines.add(String.format("%s%s%s", padding, paragraph, padding));
+				
+			} else if(settings.centerJustified) {
+				String padding = padding(lineSize - paragraph.length());
+				
+				// find spaces
+				ArrayList<Integer> spaceIndexes = new ArrayList<Integer>();
+				
+				for(int j = 0; j < paragraph.length(); j++) {
+					if(!Character.isWhitespace(paragraph.charAt(j))) {
+						spaceIndexes.add(j);
+					}
+				}
+				StringBuilder tmpString = new StringBuilder(paragraph);
+				
+				for(int j = 0; j <  padding.length(); j++) {
+					tmpString.insert(spaceIndexes.get(j), " ");
+				}
+				
+				paragraph = tmpString.toString();
 			}
 			
 			lines.add(paragraph); // add what's left of the paragraph
@@ -420,14 +447,14 @@ public class Formatter {
 	 * Ruijun Yang<br>
 	 * 
 	 * @since 1.1.0
-	 * @version 1.2.0 +Srollability to error log and preview
+	 * @version 1.3.1
 	 */
 	private void guiCreateFrame() {
 		
 		programFrame = new JFrame("Formatter");
 		
 		programFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // End program on frame close
-		programFrame.setBounds(100, 100, 670, 400);
+		programFrame.setBounds(100, 100, 720, 400);
 		
 			
 		sidePanel = new JPanel(new GridLayout(2,1));
@@ -441,9 +468,10 @@ public class Formatter {
 		
 		errorLogTextArea.setEditable(false);
 		errorLogTextArea.setText("No Errors");
-		
+		errorLogTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
 		previewTextArea.setEditable(false);
 		previewTextArea.setText("No preview available, choose a file to continue.");
+		previewTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
 		
 		
 		actionPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
