@@ -33,7 +33,7 @@ package cse360teamproject;
  * Ruijun Yang<br>
  *  
  * @since 1.0.0
- * @version 2.4.0
+ * @version 2.4.1
  *  
  * @param inputFile
  * @param output
@@ -184,7 +184,7 @@ public class Formatter {
 	 * Ruijun Yang<br>
 	 * 
 	 * @since 1.2.0
-	 * @version 2.2.0
+	 * @version 2.2.1
 	 * 
 	 */
 	private void format(String paragraph, Settings settings) {
@@ -235,7 +235,7 @@ public class Formatter {
 					ArrayList<Integer> spaceIndexes = new ArrayList<Integer>();
 					
 					for(int j = 0; j < newLine.length(); j++) {
-						if(!Character.isWhitespace(newLine.charAt(j))) {
+						if(Character.isWhitespace(newLine.charAt(j))) {
 							spaceIndexes.add(j);
 						}
 					}
@@ -246,6 +246,7 @@ public class Formatter {
 					}
 					
 					newLine = tmpString.toString();
+					lines.add(newLine);
 					
 				} 
 				else 
@@ -263,25 +264,7 @@ public class Formatter {
 				String padding = padding((lineSize - paragraph.length()) / 2);
 				lines.add(String.format("%s%s%s", padding, paragraph, padding));
 				
-			} else if(settings.centerJustified) {
-				String padding = padding(lineSize - paragraph.length());
-				
-				// find spaces
-				ArrayList<Integer> spaceIndexes = new ArrayList<Integer>();
-				
-				for(int j = 0; j < paragraph.length(); j++) {
-					if(!Character.isWhitespace(paragraph.charAt(j))) {
-						spaceIndexes.add(j);
-					}
-				}
-				StringBuilder tmpString = new StringBuilder(paragraph);
-				
-				for(int j = 0; j <  padding.length(); j++) {
-					tmpString.insert(spaceIndexes.get(j), " ");
-				}
-				
-				paragraph = tmpString.toString();
-			}
+			} 
 			
 			lines.add(paragraph); // add what's left of the paragraph
 			
