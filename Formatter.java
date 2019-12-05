@@ -1,4 +1,4 @@
-package cse360teamproject;
+package cse360teamProject;
 
 /**
  * Takes a text file input and outputs a formatted version of text
@@ -56,7 +56,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.BorderFactory;
 
 public class Formatter {
-	
 	private JFrame programFrame;
 	private JPanel sidePanel;
 	private JPanel actionPanel;
@@ -128,7 +127,8 @@ public class Formatter {
 			previewTextArea.setText("");
 			
 			// While !EOF, parse.
-			while(currentChar != -1) {
+			while(currentChar != -1) 
+			{
 				// Assume we are parsing flags.
 				parsingFlags = true;
 				parsedFlags = new ArrayList<Character>();
@@ -141,7 +141,8 @@ public class Formatter {
 						currentChar = file.read(); // assume this is a '\n'
 						currentChar = file.read(); // assume this is a '-'
 						
-					} else {
+					} 
+					else {
 						
 						// move on to parsing paragraph
 						parsingFlags = false;
@@ -162,27 +163,34 @@ public class Formatter {
 							parsingParagraph = false;
 							Settings settings;
 							
-							if(sections.size() > 1) {
+							if(sections.size() > (sections.size())) {
 								settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
 								parsedFlags.forEach(flag -> settings.updateSetting(flag));
-							} else {
+							
+							} 
+							else 
+							{
 								settings = new Settings(parsedFlags);
 								sections.add(new Section(parsedParagraph, settings)); // create and add section	
+						
 							}
 						}
 						
-					} else if(currentChar == -1) {
-						
+					} 
+					else if(currentChar == -1) 
+					{
 						parsingFlags = false;
 						parsingParagraph = false;
 						Settings settings;
 						
-						if(sections.size() > 1) {
+						if(sections.size() > sections.size()) {
 							settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
 							parsedFlags.forEach(flag -> settings.updateSetting(flag));
+						
 						} else {
 							settings = new Settings(parsedFlags);
 							sections.add(new Section(parsedParagraph, settings)); // create and add section	
+					
 						}
 					} else {
 						
@@ -224,18 +232,23 @@ public class Formatter {
 		
 		if(settings.oneColumn) {
 			
-			if(settings.indented) {
+			if(settings.indented) 
+			{
 				paragraph = padding(5) + paragraph;
 				
-			} else if(settings.blockIndented) {
+			} 
+			else if(settings.blockIndented) {
 				lineSize = 70;
 			}
 			
-			while(paragraph.length() > lineSize) { // set line breaks
+			while(paragraph.length() > lineSize) 
+			{ // set line breaks
 				int i = lineSize - 1;
 				
-				if(!Character.isWhitespace(paragraph.charAt(i))) { // does line end on a space " "? 
-					while(!Character.isWhitespace(paragraph.charAt(i))) { // find the closest space 
+				if(!Character.isWhitespace(paragraph.charAt(i))) 
+				{ // does line end on a space " "? 
+					while(!Character.isWhitespace(paragraph.charAt(i))) 
+					{ // find the closest space 
 						i--;
 					}
 				}
@@ -279,31 +292,40 @@ public class Formatter {
 			
 			lines.add(paragraph); // add what's left of the paragraph
 			
-		} else if(settings.twoColumn) {
+		} 
+		else if(settings.twoColumn) 
+		{
 			lineSize = 35;
 			String leftParagraph;
 			String rightParagraph;
 			
 			
-			if(!Character.isWhitespace(paragraph.charAt(paragraph.length() / 2))) {
+			if(!Character.isWhitespace(paragraph.charAt(paragraph.length() / 2))) 
+			{
 				int i = paragraph.length() / 2;
 				
-				while(!Character.isWhitespace(paragraph.charAt(i))) { // find the closest space 
+				while(!Character.isWhitespace(paragraph.charAt(i))) 
+				{ // find the closest space 
 					i--;
 				}
 				
 				leftParagraph = paragraph.substring(0, (i));
 				rightParagraph = paragraph.substring(i + 1, paragraph.length());
-			} else {
+			} 
+			else 
+			{
 				leftParagraph = paragraph.substring(0, (paragraph.length() / 2));
 				rightParagraph = paragraph.substring((paragraph.length() / 2), paragraph.length());
 			}
 			
-			while(leftParagraph.length() > lineSize) { // set line breaks
+			while(leftParagraph.length() > lineSize) 
+			{ // set line breaks
 				
-				if(!Character.isWhitespace(leftParagraph.charAt(lineSize - 1))) { // does line end on a space " "? 
+				if(!Character.isWhitespace(leftParagraph.charAt(lineSize - 1))) 
+				{ // does line end on a space " "? 
 					int i = lineSize - 1;
-					while(!Character.isWhitespace(leftParagraph.charAt(i))) { // find the closest space 
+					while(!Character.isWhitespace(leftParagraph.charAt(i))) 
+					{ // find the closest space 
 						i--;
 					}
 					
@@ -311,7 +333,9 @@ public class Formatter {
 					
 					lines.add(newLine + padding(45 - newLine.length())); // include column gutters
 					leftParagraph = leftParagraph.substring(i + 1);	// trim line off paragraph
-				} else {
+				} 
+				else 
+				{
 					newLine = leftParagraph.substring(0, lineSize);
 					lines.add(newLine + padding(9));
 					leftParagraph = leftParagraph.substring(lineSize + 1);
@@ -520,8 +544,10 @@ public class Formatter {
 	            if(fileChooser.getSelectedFile().exists()) {
 	            	
 	            	inputFile = fileChooser.getSelectedFile();
+	            	previewTextArea.setText("Preview available, click 'Preview' to continue.");
 	            
-	            } else {
+	            } 
+	            else {
 	            	
 	            	errorLogTextArea.setText("No file choosen");
 	            	
