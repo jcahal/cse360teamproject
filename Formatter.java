@@ -33,7 +33,7 @@ package cse360teamproject;
  * Ruijun Yang<br>
  *  
  * @since 1.0.0
- * @version 2.1.2
+ * @version 2.3.0
  *  
  * @param inputFile
  * @param output
@@ -57,7 +57,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.BorderFactory;
 
 public class Formatter {
-	
 	private JFrame programFrame;
 	private JPanel sidePanel;
 	private JPanel actionPanel;
@@ -68,7 +67,6 @@ public class Formatter {
 	private JScrollPane errorLogScroll;
 	private JScrollPane previewScroll;
 	private File inputFile = null;
-	private String output = "";
 	final JFileChooser fileChooser = new JFileChooser("~/"); // ~/ is home dir in Unix. Needs to be tested in Windows. 
 	
 	public static void main(String[] args) {
@@ -89,189 +87,98 @@ public class Formatter {
 	}
 	
 	/**
-	 * Preview
+	 * preview(File file) - opens and parses file and sends sections to format()
 	 * 
 	 * @since 2.0.0
-	 * @version 1.0.0
+	 * @version 2.0.0
 	 * 
 	 * @param file FileReader
 	 * 
 	 */
-	private void preview(FileReader file) {
+	private void preview(File file) {
 		previewTextArea.setText("");
 		
-		ArrayList<Section> sections = parse(file);
-		errorLogTextArea.append(sections.size() + "");
-		
-		sections.forEach(section -> format(section));
+		try {
+			FileReader reader = new FileReader(file);
+			
+			try {
+				int c = reader.read();
+				String fileString = "";
+				while(c != -1) {
+					fileString += (char)c;
+					c = reader.read();
+				}
+				Pattern pattern = Pattern.compile("(.+\\R)");
+				Matcher matcher = pattern.matcher(fileString);
+				ArrayList<Character> flags = new ArrayList<Character>();
+				ArrayList<String> lines = new ArrayList<String>();
+				Settings settings = new Settings();
+
+				while(matcher.find()) {
+					String line = matcher.group(1);
+					lines.add(line);
+				}
+				String paragraph = "";
+				
+				for(int i = 0; i < lines.size(); i++) {
+					
+					String line = lines.get(i);
+					
+					if(line.charAt(0) == '-') {
+						
+						if(i > 1 && !paragraph.isEmpty()) {
+							flags.forEach(flag -> settings.updateSetting(flag));
+							format(paragraph, settings);
+							flags.clear();
+							paragraph = "";
+						}
+						flags.add(line.charAt(1));
+						
+					} else {
+						paragraph += line;
+					}
+				}
+				
+				// format the last paragraph
+				flags.forEach(flag -> settings.updateSetting(flag));
+				format(paragraph, settings);
+				
+				// print sections to preview, for debug
+				// sections.forEach(section -> previewTextArea.append(section.toString()));
+				reader.close();
+				
+			} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
+		} catch(FileNotFoundException error) { errorLogTextArea.setText(error.toString()); }
 			
 	}
 	
 	/**
-	 * Parse
+	 * parse() - logic moved to the preview function.
+	 * 
+	 * @return ArrayList<Section>
+	 * @param file FileReader
+	 * 
+	 * @author Jonathan Cahal<br>
+	 * Tingyu Luo<br>
+	 * Anna McDonald<br>
+	 * Ruijun Yang<br>
 	 * 
 	 * @since 2.0.0
 	 * @version 1.0.0
 	 * 
-	 * @param file FileReader
+	 * @deprecated
 	 */
 	private ArrayList<Section> parse(FileReader file) {
-		ArrayList<Section> sections = new ArrayList<Section>();
-		boolean parsingFlags = false;
-		boolean parsingParagraph = false;
-		ArrayList<Character> parsedFlags;
-		String parsedParagraph;
-		int currentChar = -1; // init to empty file
-		String fileString = "";
-		int c;
-		
-		
-		// read file into String
-		try {
-			c = file.read();
-			while(c != -1) {
-				fileString += (char)c;
-				c = file.read();
-			}
-			Pattern pattern = Pattern.compile(".+\\R");
-			Matcher matcher = pattern.matcher(fileString);
-			ArrayList<Character> flags = new ArrayList<Character>();
-			ArrayList<String> lines = new ArrayList<String>();
-			ArrayList<Section> sections2 = new ArrayList<Section>();
-
-			while(matcher.find()) {
-				String line = matcher.group();
-				lines.add(line);
-			}
-			String paragraph = "";
-			
-			for(int i = 0; i < lines.size(); i++) {
-				String line = lines.get(i);
-				
-				
-				previewTextArea.append("loop: " + i + " - ");
-				
-				if(line.charAt(0) == '-') {
-					previewTextArea.append("Flag\n");
-					if(i > 1 && !paragraph.isEmpty()) {
-						previewTextArea.append("Section\n");
-						Section section = new Section(paragraph, new Settings(flags));
-						sections2.add(section);
-						flags.clear();
-						paragraph = "";
-					}
-					
-					flags.add(line.charAt(1));
-				} else {
-					paragraph += line;
-					previewTextArea.append("Paragraph - " + paragraph.length() + "\n");
-				}
-			}
-			
-			sections2.forEach(sec -> previewTextArea.append(sec.toString()));
-			
-//			flags.forEach(flag -> previewTextArea.append(flag + "\n"));
-//			paragraphs.forEach(paragraph -> previewTextArea.append(paragraph + "\n"));
-//			lines.forEach(line -> previewTextArea.append(line + "\n"));
-//			String[] lines = fileString.split("\\R");
-//			String[] paragraphs = fileString.split("-\\w{1}\\r");
-//			String foo = fileString.replaceAll("^(?!-).+", "");
-//			String[] flags = foo.split("$"); 
-//			for(int i = 0; i < flags.length; i++) {
-//				previewTextArea.append(flags[i] + "\n");
-////				previewTextArea.append(paragraphs[i] + "\n");
-//			}
-			
-		} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
-		
-		
-		// First, try to read file. If IOException is thrown, catch it and display error.
-//		try {
-//			
-//			String fileString = file.toString();
-//			
-//			
-//			do {
-//				
-//			} while();
-//			previewTextArea.setText(fileString);
-//			
-//			currentChar = file.read();
-//			
-//			// While !EOF, parse.
-//			while(currentChar != -1) {
-//				// Assume we are parsing flags.
-//				parsingFlags = true;
-//				parsedFlags = new ArrayList<Character>();
-//				
-//				while(parsingFlags) {
-//					// If current char is '-', assume flags. Else, switch to paragraph.
-//					if((char)currentChar == '-') {
-//						currentChar = file.read(); // assuming this is a flag
-//						parsedFlags.add((Character)(char)currentChar); // double cast needed for int ~> Character
-//						currentChar = file.read(); // assume this is a '\n'
-//						currentChar = file.read(); // assume this is a '-'
-//						
-//					} else {
-//						
-//						// move on to parsing paragraph
-//						parsingFlags = false;
-//						parsingParagraph = true;
-//					}
-//				} // end parsing flags
-//				
-//				parsedParagraph = ""; // (re)init paragraph
-//				
-//				while(parsingParagraph) {
-//					
-//					if((char)currentChar == '\n') {
-//						parsedParagraph += (char)currentChar; // put '\n' into paragraph
-//						currentChar = file.read();
-//						
-//					} else if((char)currentChar == '-') {
-//						
-//						parsingParagraph = false;
-//						Settings settings;
-//						
-//						if(sections.size() > 1) {
-//							settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
-//							parsedFlags.forEach(flag -> settings.updateSetting(flag));
-//						} else {
-//							settings = new Settings(parsedFlags);
-//							sections.add(new Section(parsedParagraph, settings)); // create and add section	
-//							errorLogTextArea.append("\nsection added");
-//						}
-//					} else if(currentChar == -1) {
-//						
-//						parsingFlags = false;
-//						parsingParagraph = false;
-//						Settings settings;
-//						
-//						if(sections.size() > 1) {
-//							settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
-//							parsedFlags.forEach(flag -> settings.updateSetting(flag));
-//						} else {
-//							settings = new Settings(parsedFlags);
-//							sections.add(new Section(parsedParagraph, settings)); // create and add section	
-////							errorLogTextArea.append("\nsection added");
-//						}
-//					} else {
-//						
-//						parsedParagraph += (char)currentChar;
-//						currentChar = file.read();
-//					}
-//				}// end parsing paragraph
-//			} // end parsing file
-//		} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
-		
-		return sections; // return
+		return new ArrayList<Section>();
 	}
 	
 	/**
-	 * format(Settings settings, String pargraph) - takes an input file, sections it and formats the sections<br>
+	 * format(String paragraph, Settings settings) - takes an input file, sections it and formats the sections<br>
 	 * 	based on format flags provided to that section.
 	 * 
 	 * @return void
+	 * @param paragraph String
+	 * @param Settings settings
 	 * 
 	 * @author Jonathan Cahal<br>
 	 * Tingyu Luo<br>
@@ -281,11 +188,8 @@ public class Formatter {
 	 * @since 1.2.0
 	 * @version 2.2.0
 	 * 
-	 * @param section Section
 	 */
-	private void format(Section section) {
-		Settings settings = section.settings;
-		String paragraph = section.paragraph;
+	private void format(String paragraph, Settings settings) {
 		String newLine = "";
 		ArrayList<String> lines = new ArrayList<String>();
 		int lineSize = 80;
@@ -294,18 +198,23 @@ public class Formatter {
 		
 		if(settings.oneColumn) {
 			
-			if(settings.indented) {
+			if(settings.indented) 
+			{
 				paragraph = padding(5) + paragraph;
 				
-			} else if(settings.blockIndented) {
+			} 
+			else if(settings.blockIndented) {
 				lineSize = 70;
 			}
 			
-			while(paragraph.length() > lineSize) { // set line breaks
+			while(paragraph.length() > lineSize) 
+			{ // set line breaks
 				int i = lineSize - 1;
 				
-				if(!Character.isWhitespace(paragraph.charAt(i))) { // does line end on a space " "? 
-					while(!Character.isWhitespace(paragraph.charAt(i))) { // find the closest space 
+				if(!Character.isWhitespace(paragraph.charAt(i))) 
+				{ // does line end on a space " "? 
+					while(!Character.isWhitespace(paragraph.charAt(i))) 
+					{ // find the closest space 
 						i--;
 					}
 				}
@@ -338,40 +247,51 @@ public class Formatter {
 					
 					newLine = tmpString.toString();
 					
-				} else {
-					lines.add(newLine);
 				}
+				else 
+				{	
+					lines.add(newLine);
+				}		
 				
 				paragraph = paragraph.substring(i + 1);	// trim line off newLine
 			}
 			
 			lines.add(paragraph); // add what's left of the paragraph
 			
-		} else if(settings.twoColumn) {
+		} 
+		else if(settings.twoColumn) 
+		{
 			lineSize = 35;
 			String leftParagraph;
 			String rightParagraph;
 			
 			
-			if(!Character.isWhitespace(paragraph.charAt(paragraph.length() / 2))) {
+			if(!Character.isWhitespace(paragraph.charAt(paragraph.length() / 2))) 
+			{
 				int i = paragraph.length() / 2;
 				
-				while(!Character.isWhitespace(paragraph.charAt(i))) { // find the closest space 
+				while(!Character.isWhitespace(paragraph.charAt(i))) 
+				{ // find the closest space 
 					i--;
 				}
 				
 				leftParagraph = paragraph.substring(0, (i));
 				rightParagraph = paragraph.substring(i + 1, paragraph.length());
-			} else {
+			} 
+			else 
+			{
 				leftParagraph = paragraph.substring(0, (paragraph.length() / 2));
 				rightParagraph = paragraph.substring((paragraph.length() / 2), paragraph.length());
 			}
 			
-			while(leftParagraph.length() > lineSize) { // set line breaks
+			while(leftParagraph.length() > lineSize) 
+			{ // set line breaks
 				
-				if(!Character.isWhitespace(leftParagraph.charAt(lineSize - 1))) { // does line end on a space " "? 
+				if(!Character.isWhitespace(leftParagraph.charAt(lineSize - 1))) 
+				{ // does line end on a space " "? 
 					int i = lineSize - 1;
-					while(!Character.isWhitespace(leftParagraph.charAt(i))) { // find the closest space 
+					while(!Character.isWhitespace(leftParagraph.charAt(i))) 
+					{ // find the closest space 
 						i--;
 					}
 					
@@ -379,15 +299,34 @@ public class Formatter {
 					
 					lines.add(newLine + padding(45 - newLine.length())); // include column gutters
 					leftParagraph = leftParagraph.substring(i + 1);	// trim line off paragraph
-				} else {
+				} 
+				else 
+				{
 					newLine = leftParagraph.substring(0, lineSize);
 					lines.add(newLine + padding(9));
 					leftParagraph = leftParagraph.substring(lineSize + 1);
 				}
 			}
-			
-			lines.add(leftParagraph + padding(45 - leftParagraph.trim().length())); // add what's left of the paragraph
-			
+			int length=(45-leftParagraph.length());
+			if(settings.centered)
+			{
+				lines.add(padding((45-leftParagraph.length())/2));
+				length=length/2;
+				lines.add(leftParagraph + padding(length)); // add what's left of the paragraph
+			}
+			else if(settings.rightJustified)
+			{
+				lines.add(padding(length)+leftParagraph); // add what's left of the paragraph
+			}
+			else if(settings.indented)
+			{
+				length=length-5;
+				lines.add(padding(5)+leftParagraph+padding(length));
+			}
+			else
+			{
+				lines.add(leftParagraph + padding(length)); // add what's left of the paragraph
+			}
 			int j = 0;
 			while(rightParagraph.length() > lineSize) { // set line breaks
 				
@@ -410,7 +349,26 @@ public class Formatter {
 				j++;
 			}
 			
-			lines.set(j, lines.get(j) + rightParagraph);
+			length=(45-rightParagraph.length());
+			if(settings.centered)
+			{
+				lines.add(padding((45-rightParagraph.length())/2));
+				length=length/2;
+				lines.add(rightParagraph + padding(length)); // add what's right of the paragraph
+			}
+			else if(settings.rightJustified)
+			{
+				lines.add(padding(length)+rightParagraph); // add what's right of the paragraph
+			}
+			else if(settings.indented)
+			{
+				length=length-5;
+				lines.add(padding(5)+rightParagraph+padding(length));
+			}
+			else
+			{
+				lines.add(rightParagraph + padding(length)); // add what's right of the paragraph
+			}
 			
 		}
 		
@@ -429,7 +387,18 @@ public class Formatter {
 	}
 	
 	/**
+	 * padding() - makes a string of whitespace at the given size
 	 * 
+	 * @param size int
+	 * @return String
+	 * 
+	 * * @author Jonathan Cahal<br>
+	 * Tingyu Luo<br>
+	 * Anna McDonald<br>
+	 * Ruijun Yang<br>
+	 * 
+	 * @since 2.0.0
+	 * @version 1.0.0
 	 */
 	private String padding(int size) {
 		String padding = "";
@@ -530,7 +499,7 @@ public class Formatter {
 	}
 	
 	/**
-	 * ActionController decides what to do for each specific action.
+	 * ActionController - decides what to do for each specific action.
 	 * 
 	 * @author Jonathan Cahal <br>
 	 * Tingyu Luo<br>
@@ -538,7 +507,7 @@ public class Formatter {
 	 * Ruijun Yang<br>
 	 * 
 	 * @since 1.1.0
-	 * @version 1.0.3 +IOException handledd
+	 * @version 1.2.0
 	 */
 	
 	private class ActionController implements ActionListener {
@@ -552,8 +521,10 @@ public class Formatter {
 	            if(fileChooser.getSelectedFile().exists()) {
 	            	
 	            	inputFile = fileChooser.getSelectedFile();
+	            	previewTextArea.setText("Preview available, click 'Preview' to continue.");
 	            
-	            } else {
+	            } 
+	            else {
 	            	
 	            	errorLogTextArea.setText("No file choosen");
 	            	
@@ -562,29 +533,12 @@ public class Formatter {
 	            
 	         } else if(command.contentEquals("preview")) {
 	        	
-	        	 try {
-	        		 
-	        		FileReader readFile = new FileReader(inputFile);
-	        		preview(readFile);
-	        		readFile.close();
-	        		
-	        	 } catch(IOException error) { errorLogTextArea.setText(error.toString()); }
+	        	 preview(inputFile);
 	        	 
 	         } else if(command.contentEquals("saveAs")) {
 	        	 
 	        	 if (inputFile != null) {
-	        		 int userSelection = fileChooser.showSaveDialog(programFrame.getParent());
-	        		 
-	        		 if(userSelection == JFileChooser.APPROVE_OPTION) {
-	        			    File outputFile = fileChooser.getSelectedFile();
-	        			    
-	        			    try {
-	        			    	FileWriter fileWriter = new FileWriter(outputFile);
-	        			    	fileWriter.write(previewTextArea.getText());
-		        			    fileWriter.close();
-	        			    } catch(IOException error) { errorLogTextArea.setText(error.toString()); }
-	        			    
-	        		}
+	        		 fileChooser.showSaveDialog(programFrame.getParent());
 	        	 } else {
 	        		 errorLogTextArea.setText("No file choosen");
 	        	 }
@@ -786,6 +740,7 @@ public class Formatter {
 	 *
 	 * @since 2.0.0
 	 * @version 1.0.0
+	 * @deprecated
 	 * 
 	 */
 	private class Section {
