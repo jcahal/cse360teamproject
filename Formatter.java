@@ -33,7 +33,7 @@ package cse360teamproject;
  * Ruijun Yang<br>
  *  
  * @since 1.0.0
- * @version 2.4.2
+ * @version 2.5.0rc1
  *  
  * @param inputFile
  * @param output
@@ -67,6 +67,7 @@ public class Formatter {
 	private JScrollPane errorLogScroll;
 	private JScrollPane previewScroll;
 	private File inputFile = null;
+	private boolean previewReady = false;
 	final JFileChooser fileChooser = new JFileChooser("~/"); // ~/ is home dir in Unix. Needs to be tested in Windows. 
 	
 	public static void main(String[] args) {
@@ -75,7 +76,7 @@ public class Formatter {
 	}
 	
 	/**
-	 * Default constructor, creates GUI and runs
+	 * Default constructor, creates GUI and links Actions
 	 * 
 	 * @since 1.0.0
 	 * @version 1.1.0
@@ -87,7 +88,7 @@ public class Formatter {
 	}
 	
 	/**
-	 * preview(File file) - opens and parses file and sends sections to format()
+	 * preview(File file) - opens and parses file into flags and , then feeds them to format()
 	 * 
 	 * @since 2.0.0
 	 * @version 2.0.0
@@ -144,6 +145,7 @@ public class Formatter {
 				format(paragraph, settings);
 				
 				reader.close();
+				previewReady = true;
 				
 			} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
 		} catch(FileNotFoundException error) { errorLogTextArea.setText(error.toString()); }
@@ -151,32 +153,11 @@ public class Formatter {
 	}
 	
 	/**
-	 * parse() - logic moved to the preview function.
-	 * 
-	 * @return ArrayList<Section>
-	 * @param file FileReader
-	 * 
-	 * @author Jonathan Cahal<br>
-	 * Tingyu Luo<br>
-	 * Anna McDonald<br>
-	 * Ruijun Yang<br>
-	 * 
-	 * @since 2.0.0
-	 * @version 1.0.0
-	 * 
-	 * @deprecated
-	 */
-	private ArrayList<Section> parse(FileReader file) {
-		return new ArrayList<Section>();
-	}
-	
-	/**
-	 * format(String paragraph, Settings settings) - takes an input file, sections it and formats the sections<br>
-	 * 	based on format flags provided to that section.
+	 * format(String paragraph, Settings settings) - takes a String and Settings object and formats it.
 	 * 
 	 * @return void
 	 * @param paragraph String
-	 * @param Settings settings
+	 * @param settings Settings
 	 * 
 	 * @author Jonathan Cahal<br>
 	 * Tingyu Luo<br>
@@ -266,10 +247,9 @@ public class Formatter {
 				String padding = padding((lineSize - paragraph.length()) / 2);
 				lines.add(String.format("%s%s%s", padding, paragraph, padding));
 				
-			} 
-			
-			lines.add(paragraph); // add what's left of the paragraph
-			
+			} else {
+				lines.add(paragraph); // add what's left of the paragraph
+			}
 		} 
 		else if(settings.twoColumn) 
 		{
@@ -320,25 +300,7 @@ public class Formatter {
 				}
 			}
 			int length=(45-leftParagraph.length());
-			if(settings.centered)
-			{
-				lines.add(padding((45-leftParagraph.length())/2));
-				length=length/2;
-				lines.add(leftParagraph + padding(length)); // add what's left of the paragraph
-			}
-			else if(settings.rightJustified)
-			{
-				lines.add(padding(length)+leftParagraph); // add what's left of the paragraph
-			}
-			else if(settings.indented)
-			{
-				length=length-5;
-				lines.add(padding(5)+leftParagraph+padding(length));
-			}
-			else
-			{
-				lines.add(leftParagraph + padding(length)); // add what's left of the paragraph
-			}
+			lines.add(leftParagraph + padding(length)); // add what's left of the paragraph
 			int j = 0;
 			while(rightParagraph.length() > lineSize) { // set line breaks
 				
@@ -362,26 +324,7 @@ public class Formatter {
 			}
 			
 			length=(45-rightParagraph.length());
-			if(settings.centered)
-			{
-				lines.add(padding((45-rightParagraph.length())/2));
-				length=length/2;
-				lines.add(rightParagraph + padding(length)); // add what's right of the paragraph
-			}
-			else if(settings.rightJustified)
-			{
-				lines.add(padding(length)+rightParagraph); // add what's right of the paragraph
-			}
-			else if(settings.indented)
-			{
-				length=length-5;
-				lines.add(padding(5)+rightParagraph+padding(length));
-			}
-			else
-			{
-				lines.add(rightParagraph + padding(length)); // add what's right of the paragraph
-			}
-			
+			lines.add(padding(length + 11) + rightParagraph); // add what's right of the paragraph
 		}
 		
 		if(settings.blankLine) {
@@ -432,7 +375,7 @@ public class Formatter {
 	 * Ruijun Yang<br>
 	 * 
 	 * @since 1.1.0
-	 * @version 1.3.1
+	 * @version 1.4.0
 	 */
 	private void guiCreateFrame() {
 		
@@ -452,10 +395,9 @@ public class Formatter {
 		previewScroll = new JScrollPane(previewTextArea);
 		
 		errorLogTextArea.setEditable(false);
-		errorLogTextArea.setText("No Errors");
 		errorLogTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
 		previewTextArea.setEditable(false);
-		previewTextArea.setText("No preview available, choose a file to continue.");
+		previewTextArea.setText("No preview available, click \"Choose file\" to continue.");
 		previewTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
 		
 		
@@ -520,7 +462,7 @@ public class Formatter {
 	 * Ruijun Yang<br>
 	 * 
 	 * @since 1.1.0
-	 * @version 1.2.0
+	 * @version 1.3.0
 	 */
 	
 	private class ActionController implements ActionListener {
@@ -529,9 +471,9 @@ public class Formatter {
 	         
 	         if( command.equals("chooseFile"))  {
 	            
-	        	fileChooser.showOpenDialog(programFrame.getParent());
+	        	int selection = fileChooser.showOpenDialog(programFrame.getParent());
 	        	
-	            if(fileChooser.getSelectedFile().exists()) {
+	            if(selection == JFileChooser.APPROVE_OPTION) {
 	            	
 	            	inputFile = fileChooser.getSelectedFile();
 	            	previewTextArea.setText("Preview available, click 'Preview' to continue.");
@@ -539,21 +481,28 @@ public class Formatter {
 	            } 
 	            else {
 	            	
-	            	errorLogTextArea.setText("No file choosen");
+	            	errorLogTextArea.append("NO FILE\n");
 	            	
 	            }
 	            
-	            
 	         } else if(command.contentEquals("preview")) {
 	        	
-	        	 preview(inputFile);
+	        	 if (inputFile != null) {
+	        		 preview(inputFile);
+	        	 } else {
+	        		 errorLogTextArea.append("NO FILE\n");
+	        	 }
 	        	 
 	         } else if(command.contentEquals("saveAs")) {
 	        	 
 	        	 if (inputFile != null) {
-	        		 fileChooser.showSaveDialog(programFrame.getParent());
+	        		 if(previewReady) {
+	        			 fileChooser.showSaveDialog(programFrame.getParent());
+	        		 } else {
+	        			 errorLogTextArea.append("NO PREVIEW\n");
+	        		 }
 	        	 } else {
-	        		 errorLogTextArea.setText("No file choosen");
+	        		 errorLogTextArea.append("NO FILE\n");
 	        	 }
 	        	 
 	         }
@@ -570,9 +519,8 @@ public class Formatter {
 	 * Ruijun Yang<br>
 	 *
 	 * @since 1.2.0
-	 * @version 2.0.0
+	 * @version 2.1.0
 	 * 
-	 
 	 */
 	private class Settings {
 		private boolean leftJustified = true;
@@ -606,7 +554,7 @@ public class Formatter {
 		 * @since 1.0.0
 		 * @version 2.0.0
 		 * 
-		 * @param
+		 * @param flags ArrayList<Character> 
 		 */
 		public Settings(ArrayList<Character> flags) {
 			this.flags = flags;
@@ -724,6 +672,10 @@ public class Formatter {
 					blockIndented = false;
 					
 					break;
+				} default: {
+					errorLogTextArea.append("FLAG ERROR (" + flag + ")\n");
+					
+					break;
 				}
 			
 				
@@ -744,50 +696,5 @@ public class Formatter {
 					"blankLine: " + blankLine + "\n";
 		}
 		
-	}
-	
-	/**
-	 * Section class
-	 * 
-	 * @author JonathanCahal
-	 *
-	 * @since 2.0.0
-	 * @version 1.0.0
-	 * @deprecated
-	 * 
-	 */
-	private class Section {
-		private String paragraph;
-
-		private Settings settings;
-		
-		public Section() {
-			this("", new Settings());
-		}
-		
-		public Section(String paragraph, Settings settings) {
-			setParagraph(paragraph);
-			setSettings(settings);
-		}
-		
-		public void setParagraph(String paragraph) {
-			this.paragraph = paragraph;
-		}
-		
-		public void setSettings(Settings settings) {
-			this.settings = settings;
-		}
-
-		public String getParagraph() {
-			return paragraph;
-		}
-		
-		public Settings getSettings() {
-			return settings;
-		}
-		
-		public String toString() {
-			return settings.toString() + paragraph;
-		}
 	}
 }
