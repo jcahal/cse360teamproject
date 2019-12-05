@@ -100,7 +100,6 @@ public class Formatter {
 		previewTextArea.setText("");
 		
 		ArrayList<Section> sections = parse(file);
-		errorLogTextArea.append(sections.size() + "");
 		
 		sections.forEach(section -> format(section));
 			
@@ -121,103 +120,79 @@ public class Formatter {
 		ArrayList<Character> parsedFlags;
 		String parsedParagraph;
 		int currentChar = -1; // init to empty file
-		String fileString = "";
-		int c;
-		
-		
-		// read file into String
-		try {
-			c = file.read();
-			while(c != -1) {
-				fileString += (char)c;
-				c = file.read();
-			}
-			
-			String newStr = fileString.replaceAll("a", "M");
-			previewTextArea.setText(fileString);
-			previewTextArea.append(newStr);
-			
-		} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
-		
 		
 		// First, try to read file. If IOException is thrown, catch it and display error.
-//		try {
-//			
-//			String fileString = file.toString();
-//			
-//			
-//			do {
-//				
-//			} while();
-//			previewTextArea.setText(fileString);
-//			
-//			currentChar = file.read();
-//			
-//			// While !EOF, parse.
-//			while(currentChar != -1) {
-//				// Assume we are parsing flags.
-//				parsingFlags = true;
-//				parsedFlags = new ArrayList<Character>();
-//				
-//				while(parsingFlags) {
-//					// If current char is '-', assume flags. Else, switch to paragraph.
-//					if((char)currentChar == '-') {
-//						currentChar = file.read(); // assuming this is a flag
-//						parsedFlags.add((Character)(char)currentChar); // double cast needed for int ~> Character
-//						currentChar = file.read(); // assume this is a '\n'
-//						currentChar = file.read(); // assume this is a '-'
-//						
-//					} else {
-//						
-//						// move on to parsing paragraph
-//						parsingFlags = false;
-//						parsingParagraph = true;
-//					}
-//				} // end parsing flags
-//				
-//				parsedParagraph = ""; // (re)init paragraph
-//				
-//				while(parsingParagraph) {
-//					
-//					if((char)currentChar == '\n') {
-//						parsedParagraph += (char)currentChar; // put '\n' into paragraph
-//						currentChar = file.read();
-//						
-//					} else if((char)currentChar == '-') {
-//						
-//						parsingParagraph = false;
-//						Settings settings;
-//						
-//						if(sections.size() > 1) {
-//							settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
-//							parsedFlags.forEach(flag -> settings.updateSetting(flag));
-//						} else {
-//							settings = new Settings(parsedFlags);
-//							sections.add(new Section(parsedParagraph, settings)); // create and add section	
-//							errorLogTextArea.append("\nsection added");
-//						}
-//					} else if(currentChar == -1) {
-//						
-//						parsingFlags = false;
-//						parsingParagraph = false;
-//						Settings settings;
-//						
-//						if(sections.size() > 1) {
-//							settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
-//							parsedFlags.forEach(flag -> settings.updateSetting(flag));
-//						} else {
-//							settings = new Settings(parsedFlags);
-//							sections.add(new Section(parsedParagraph, settings)); // create and add section	
-////							errorLogTextArea.append("\nsection added");
-//						}
-//					} else {
-//						
-//						parsedParagraph += (char)currentChar;
-//						currentChar = file.read();
-//					}
-//				}// end parsing paragraph
-//			} // end parsing file
-//		} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
+		try {
+			
+			currentChar = file.read();
+			previewTextArea.setText("");
+			
+			// While !EOF, parse.
+			while(currentChar != -1) {
+				// Assume we are parsing flags.
+				parsingFlags = true;
+				parsedFlags = new ArrayList<Character>();
+				
+				while(parsingFlags) {
+					// If current char is '-', assume flags. Else, switch to paragraph.
+					if((char)currentChar == '-') {
+						currentChar = file.read(); // assuming this is a flag
+						parsedFlags.add((Character)(char)currentChar); // double cast needed for int ~> Character
+						currentChar = file.read(); // assume this is a '\n'
+						currentChar = file.read(); // assume this is a '-'
+						
+					} else {
+						
+						// move on to parsing paragraph
+						parsingFlags = false;
+						parsingParagraph = true;
+					}
+				} // end parsing flags
+				
+				parsedParagraph = ""; // (re)init paragraph
+				
+				while(parsingParagraph) {
+					
+					if((char)currentChar == '\n') {
+						parsedParagraph += (char)currentChar; // put '\n' into paragraph
+						currentChar = file.read();
+						
+						if((char)currentChar == '-') {
+							
+							parsingParagraph = false;
+							Settings settings;
+							
+							if(sections.size() > 1) {
+								settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
+								parsedFlags.forEach(flag -> settings.updateSetting(flag));
+							} else {
+								settings = new Settings(parsedFlags);
+								sections.add(new Section(parsedParagraph, settings)); // create and add section	
+							}
+						}
+						
+					} else if(currentChar == -1) {
+						
+						parsingFlags = false;
+						parsingParagraph = false;
+						Settings settings;
+						
+						if(sections.size() > 1) {
+							settings = new Settings(sections.get(sections.size() - 1).settings.getFlags());
+							parsedFlags.forEach(flag -> settings.updateSetting(flag));
+						} else {
+							settings = new Settings(parsedFlags);
+							sections.add(new Section(parsedParagraph, settings)); // create and add section	
+						}
+					} else {
+						
+						parsedParagraph += (char)currentChar;
+						currentChar = file.read();
+					}
+				}// end parsing paragraph
+				errorLogTextArea.append("\nsection added");
+			} // end parsing file
+		} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
 		
 		return sections; // return
 	}
@@ -293,9 +268,11 @@ public class Formatter {
 					
 					newLine = tmpString.toString();
 					
-				} else {
-					lines.add(newLine);
 				}
+				else 
+				{	
+					lines.add(newLine);
+				}		
 				
 				paragraph = paragraph.substring(i + 1);	// trim line off newLine
 			}
@@ -340,9 +317,26 @@ public class Formatter {
 					leftParagraph = leftParagraph.substring(lineSize + 1);
 				}
 			}
-			
-			lines.add(leftParagraph + padding(45 - leftParagraph.trim().length())); // add what's left of the paragraph
-			
+			int length=(45-leftParagraph.length());
+			if(settings.centered)
+			{
+				lines.add(padding((45-leftParagraph.length())/2));
+				length=length/2;
+				lines.add(leftParagraph + padding(length)); // add what's left of the paragraph
+			}
+			else if(settings.rightJustified)
+			{
+				lines.add(padding(length)+leftParagraph); // add what's left of the paragraph
+			}
+			else if(settings.indented)
+			{
+				length=length-5;
+				lines.add(padding(5)+leftParagraph+padding(length));
+			}
+			else
+			{
+				lines.add(leftParagraph + padding(length)); // add what's left of the paragraph
+			}
 			int j = 0;
 			while(rightParagraph.length() > lineSize) { // set line breaks
 				
@@ -365,7 +359,26 @@ public class Formatter {
 				j++;
 			}
 			
-			lines.set(j, lines.get(j) + rightParagraph);
+			length=(45-rightParagraph.length());
+			if(settings.centered)
+			{
+				lines.add(padding((45-rightParagraph.length())/2));
+				length=length/2;
+				lines.add(rightParagraph + padding(length)); // add what's right of the paragraph
+			}
+			else if(settings.rightJustified)
+			{
+				lines.add(padding(length)+rightParagraph); // add what's right of the paragraph
+			}
+			else if(settings.indented)
+			{
+				length=length-5;
+				lines.add(padding(5)+rightParagraph+padding(length));
+			}
+			else
+			{
+				lines.add(rightParagraph + padding(length)); // add what's right of the paragraph
+			}
 			
 		}
 		
@@ -528,18 +541,7 @@ public class Formatter {
 	         } else if(command.contentEquals("saveAs")) {
 	        	 
 	        	 if (inputFile != null) {
-	        		 int userSelection = fileChooser.showSaveDialog(programFrame.getParent());
-	        		 
-	        		 if(userSelection == JFileChooser.APPROVE_OPTION) {
-	        			    File outputFile = fileChooser.getSelectedFile();
-	        			    
-	        			    try {
-	        			    	FileWriter fileWriter = new FileWriter(outputFile);
-	        			    	fileWriter.write(previewTextArea.getText());
-		        			    fileWriter.close();
-	        			    } catch(IOException error) { errorLogTextArea.setText(error.toString()); }
-	        			    
-	        		}
+	        		 fileChooser.showSaveDialog(programFrame.getParent());
 	        	 } else {
 	        		 errorLogTextArea.setText("No file choosen");
 	        	 }
