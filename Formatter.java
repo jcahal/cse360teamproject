@@ -33,7 +33,7 @@ package cse360teamproject;
  * Ruijun Yang<br>
  *  
  * @since 1.0.0
- * @version 2.4.1
+ * @version 2.4.2
  *  
  * @param inputFile
  * @param output
@@ -184,7 +184,7 @@ public class Formatter {
 	 * Ruijun Yang<br>
 	 * 
 	 * @since 1.2.0
-	 * @version 2.2.1
+	 * @version 2.2.2
 	 * 
 	 */
 	private void format(String paragraph, Settings settings) {
@@ -198,15 +198,11 @@ public class Formatter {
 		
 		if(settings.oneColumn) {
 			
-			if(settings.indented) 
-			{
-				paragraph = padding(5) + paragraph;
-				
-			} 
-			else if(settings.blockIndented) {
+			if(settings.blockIndented) {
 				lineSize = 70;
 			}
 			
+			boolean firstItteration = true;
 			while(paragraph.length() > lineSize) 
 			{ // set line breaks
 				int i = lineSize - 1;
@@ -220,6 +216,11 @@ public class Formatter {
 				}
 				
 				newLine = paragraph.substring(0, i).trim(); // make and add a line
+				if(settings.indented && firstItteration == true) 
+				{
+					newLine = padding(5) + newLine;
+					
+				} 
 				
 				if(settings.rightJustified) {
 					lines.add(padding(lineSize - newLine.length()) + newLine);
@@ -255,6 +256,7 @@ public class Formatter {
 				}		
 				
 				paragraph = paragraph.substring(i + 1).trim();	// trim line off newLine
+				firstItteration = false;
 			}
 			
 			if(settings.rightJustified) {
