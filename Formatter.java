@@ -49,6 +49,7 @@ package cse360teamproject;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.regex.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -132,10 +133,54 @@ public class Formatter {
 				fileString += (char)c;
 				c = file.read();
 			}
+			Pattern pattern = Pattern.compile(".+\\R");
+			Matcher matcher = pattern.matcher(fileString);
+			ArrayList<Character> flags = new ArrayList<Character>();
+			ArrayList<String> lines = new ArrayList<String>();
+			ArrayList<Section> sections2 = new ArrayList<Section>();
+
+			while(matcher.find()) {
+				String line = matcher.group();
+				lines.add(line);
+			}
+			String paragraph = "";
 			
-			String newStr = fileString.replaceAll("a", "M");
-			previewTextArea.setText(fileString);
-			previewTextArea.append(newStr);
+			for(int i = 0; i < lines.size(); i++) {
+				String line = lines.get(i);
+				
+				
+				previewTextArea.append("loop: " + i + " - ");
+				
+				if(line.charAt(0) == '-') {
+					previewTextArea.append("Flag\n");
+					if(i > 1 && !paragraph.isEmpty()) {
+						previewTextArea.append("Section\n");
+						Section section = new Section(paragraph, new Settings(flags));
+						sections2.add(section);
+						flags.clear();
+						paragraph = "";
+					}
+					
+					flags.add(line.charAt(1));
+				} else {
+					paragraph += line;
+					previewTextArea.append("Paragraph - " + paragraph.length() + "\n");
+				}
+			}
+			
+			sections2.forEach(sec -> previewTextArea.append(sec.toString()));
+			
+//			flags.forEach(flag -> previewTextArea.append(flag + "\n"));
+//			paragraphs.forEach(paragraph -> previewTextArea.append(paragraph + "\n"));
+//			lines.forEach(line -> previewTextArea.append(line + "\n"));
+//			String[] lines = fileString.split("\\R");
+//			String[] paragraphs = fileString.split("-\\w{1}\\r");
+//			String foo = fileString.replaceAll("^(?!-).+", "");
+//			String[] flags = foo.split("$"); 
+//			for(int i = 0; i < flags.length; i++) {
+//				previewTextArea.append(flags[i] + "\n");
+////				previewTextArea.append(paragraphs[i] + "\n");
+//			}
 			
 		} catch(IOException error) { errorLogTextArea.setText(error.toString()); }
 		
