@@ -172,8 +172,6 @@ public class Formatter {
 		String newLine = "";
 		ArrayList<String> lines = new ArrayList<String>();
 		int lineSize = 80;
-		char[] lineChars;
-		lineChars = new char[lineSize];
 		
 		paragraph = paragraph.replace('\n', ' '); // replace all new line chars
 		
